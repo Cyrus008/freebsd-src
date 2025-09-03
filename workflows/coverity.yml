@@ -21,8 +21,9 @@ jobs:
       - name: Download Coverity tools
         run: |
           curl -L -o coverity.tgz https://scan.coverity.com/download/linux64 \
-            --form project=freebsd_pramod \
+            --form project=cyrus008-freebsd-src \
             --form token=${{ secrets.COVERITY_TOKEN }}
+            
           mkdir coverity
           tar xzf coverity.tgz -C coverity --strip-components=1
           echo "$PWD/coverity/bin" >> $GITHUB_PATH
@@ -42,4 +43,4 @@ jobs:
             --form file=@myproject.tgz \
             --form version="`date +%Y%m%d`-${GITHUB_SHA:0:7}" \
             --form description="GitHub Actions build" \
-            https://scan.coverity.com/builds?project=freebsd_pramod
+            https://scan.coverity.com/builds?project=cyrus008-freebsd-src
