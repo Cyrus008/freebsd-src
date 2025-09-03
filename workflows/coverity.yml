@@ -1,0 +1,45 @@
+name: Coverity Scan
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # allow manual runs from GitHub UI
+
+jobs:
+  coverity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl build-essential
+
+      - name: Download Coverity tools
+        run: |
+          curl -L -o coverity.tgz https://scan.coverity.com/download/linux64 \
+            --form project=freebsd_pramod \
+            --form token=${{ secrets.COVERITY_TOKEN }}
+          mkdir coverity
+          tar xzf coverity.tgz -C coverity --strip-components=1
+          echo "$PWD/coverity/bin" >> $GITHUB_PATH
+
+      - name: Build with cov-build
+        run: |
+          cov-build --dir cov-int make
+
+      - name: Package results
+        run: tar czf myproject.tgz cov-int
+
+      - name: Upload to Coverity Scan
+        run: |
+          curl \
+            --form token=${{ secrets.COVERITY_TOKEN }} \
+            --form email=${{ secrets.COVERITY_EMAIL }} \
+            --form file=@myproject.tgz \
+            --form version="`date +%Y%m%d`-${GITHUB_SHA:0:7}" \
+            --form description="GitHub Actions build" \
+            https://scan.coverity.com/builds?project=freebsd_pramod
